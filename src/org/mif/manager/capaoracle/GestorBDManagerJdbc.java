@@ -49,6 +49,12 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     private PreparedStatement psSelEq;
     private PreparedStatement psInsEq;
     private PreparedStatement psModEq;
+    private PreparedStatement psDelEq;
+    private PreparedStatement psSelListJugador;
+    private PreparedStatement psSelJug;
+    private PreparedStatement psInsJug;
+    private PreparedStatement psModJug;
+    private PreparedStatement psDelJug;
     private PreparedStatement psSelCat;
     
     /**
@@ -66,9 +72,11 @@ public class GestorBDManagerJdbc implements IGestorBDManager
             props.loadFromXML(new FileInputStream(nomFitxer));
             String[] claus = {"url", "user", "password"};
             String[] valors = new String[3];
-            for (int i = 0; i < claus.length; i++) {
+            for (int i = 0; i < claus.length; i++)
+            {
                 valors[i] = props.getProperty(claus[i]);
-                if (valors[i] == null || valors[i].isEmpty()) {
+                if (valors[i] == null || valors[i].isEmpty())
+                {
                     throw new GestorBDManagerException("L'arxiu " + nomFitxer + " no troba la clau " + claus[i]);
                 }
             }
@@ -94,24 +102,34 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public List<Temporada> obtenirTemporades() throws GestorBDManagerException
     {
-        List<Temporada> temps = new ArrayList<Temporada>();
+        List<Temporada> temps = new ArrayList<>();
         Statement q = null;
-        try {
+        try
+        {
             q = conn.createStatement();
             ResultSet rs = q.executeQuery("SELECT anny FROM temporada");
-            while (rs.next()) {
+            while (rs.next())
+            {
                 LocalDate anny = rs.getDate("anny").toLocalDate();
                 Temporada t = new Temporada(anny);
                 temps.add(t);
             }
             rs.close();
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex)
+        {
             throw new GestorBDManagerException("Error en intentar recuperar la llista de temporades.\n", ex);
-        } finally {
-            if (q != null) {
-                try {
+        }
+        finally
+        {
+            if (q != null)
+            {
+                try
+                {
                     q.close();
-                } catch (SQLException ex) {
+                }
+                catch (SQLException ex)
+                {
                     throw new GestorBDManagerException("Error en intentar tancar la sentència que ha recuperat la llista de temporades.\n", ex);
                 }
             }
@@ -128,12 +146,14 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public List<Equip> obtenirEquips() throws GestorBDManagerException
     {
-        List<Equip> equips = new ArrayList<Equip>();
+        List<Equip> equips = new ArrayList<>();
         Statement q = null;
-        try {
+        try
+        {
             q = conn.createStatement();
             ResultSet rs = q.executeQuery("SELECT id, nom, tipus, nom_cat, temporada FROM equip");
-            while (rs.next()) {
+            while (rs.next())
+            {
                 int id = rs.getInt("id");
                 String nom = rs.getString("nom");
                 String tipus = rs.getString("tipus");
@@ -148,17 +168,26 @@ public class GestorBDManagerJdbc implements IGestorBDManager
                 equips.add(e);
             }
             rs.close();
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex)
+        {
             throw new GestorBDManagerException("Error en intentar recuperar la llista d'equips\n", ex);
-        } finally {
-            if (q != null) {
-                try {
+        }
+        finally
+        {
+            if (q != null)
+            {
+                try
+                {
                     q.close();
-                } catch (SQLException ex) {
+                }
+                catch (SQLException ex)
+                {
                     throw new GestorBDManagerException("Error en intentar tancar la sentència que ha recuperat la llista d'equips.\n", ex);
                 }
             }
         }
+        
         return equips;
     }
     
@@ -175,10 +204,14 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     {
         List<Equip> equips = new ArrayList<>();
         
-        if (psSelListEquip == null) {
-            try {
+        if (psSelListEquip == null)
+        {
+            try
+            {
                 psSelListEquip = conn.prepareStatement("SELECT id, nom, tipus, nom_cat, temporada FROM equip WHERE nom LIKE ? AND tipus LIKE ?");
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex)
+            {
                 throw new GestorBDManagerException("Error en preparar sentència psSelListEquip", ex);
             }
         }
@@ -188,7 +221,8 @@ public class GestorBDManagerJdbc implements IGestorBDManager
             psSelListEquip.setString(1, "%"+nomEquip+"%");
             psSelListEquip.setString(2, "%"+tipusEquip+"%");
             ResultSet rs = psSelListEquip.executeQuery();
-            while (rs.next()) {
+            while (rs.next())
+            {
                 int id = rs.getInt("id");
                 String nom = rs.getString("nom");
                 String tipus = rs.getString("tipus");
@@ -203,7 +237,9 @@ public class GestorBDManagerJdbc implements IGestorBDManager
                 equips.add(e);
             }
             rs.close();
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex)
+        {
             throw new GestorBDManagerException("Error en seleccionar els equips de nom i/o tipus indicat", ex);
         }
         
@@ -222,10 +258,14 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     {
         Equip equip = new Equip();
         
-        if (psSelEq == null) {
-            try {
+        if (psSelEq == null)
+        {
+            try
+            {
                 psSelEq = conn.prepareStatement("SELECT id, nom, tipus, nom_cat, temporada FROM equip WHERE id = ?");
-            } catch (SQLException ex) {
+            }
+            catch(SQLException ex)
+            {
                 throw new GestorBDManagerException("Error en preparar sentència psSelEq", ex);
             }
         }
@@ -234,7 +274,8 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         {
             psSelEq.setInt(1, idEquip);
             ResultSet rs = psSelEq.executeQuery();
-            while (rs.next()) {
+            while (rs.next())
+            {
                 int id = rs.getInt("id");
                 String nom = rs.getString("nom");
                 String tipus = rs.getString("tipus");
@@ -247,7 +288,9 @@ public class GestorBDManagerJdbc implements IGestorBDManager
                 equip.setTemporada(anny);
             }
             rs.close();
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex)
+        {
             throw new GestorBDManagerException("Error en seleccionar l'equip amb id indicat", ex);
         }
         
@@ -258,6 +301,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * Insereix l'equip a la BD
      * 
      * @param e Equip a inserir
+     * @return int Indicant la cuantitat de linies afectades a la BD (1 o 0)
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
@@ -265,10 +309,14 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     {
         int inserit = 0;
         
-        if (psInsEq == null) {
-            try {
+        if (psInsEq == null)
+        {
+            try
+            {
                 psInsEq = conn.prepareStatement("INSERT INTO equip (nom, tipus, nom_cat, temporada) VALUES (?,?,?,?)");
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex)
+            {
                 throw new GestorBDManagerException("Error en preparar sentència psInsEq", ex);
             }
         }
@@ -292,12 +340,38 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * Modifica l'equip a la BD
      * 
      * @param e Equip a modificar
+     * @return  int Indicant la cuantitat de linies afectades a la BD (1 o 0)
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public void modificarEquip(Equip e) throws GestorBDManagerException
+    public int modificarEquip(Equip e) throws GestorBDManagerException
     {
+        int modificat = 0;
         
+        if (psModEq == null)
+        {
+            try {
+                psModEq = conn.prepareStatement("UPDATE equip SET "
+                                              + "nom = ?, tipus = ?, nom_cat = ?, temporada = ? "
+                                              + "WHERE id = ?");
+            } catch (SQLException ex) {
+                throw new GestorBDManagerException("Error en preparar sentència psModEq", ex);
+            }
+        }
+        
+        try
+        {
+            psModEq.setString(1, e.getNom());
+            psModEq.setString(2, e.getTipus());
+            psModEq.setString(3, e.getCategoria().getNom());
+            psModEq.setDate(4, Date.valueOf(e.getTemporada()));
+            modificat = psModEq.executeUpdate();
+
+        } catch (SQLException ex) {
+            throw new GestorBDManagerException("Error en modificar l'equip", ex);
+        }
+        
+        return modificat;
     }
     
     /**
@@ -307,9 +381,34 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public void eliminarEquip(Equip e) throws GestorBDManagerException
+    public int eliminarEquip(Equip e) throws GestorBDManagerException
     {
+        int eliminat = 0;
         
+        if (psDelEq == null)
+        {
+            try
+            {
+                psDelEq = conn.prepareStatement("DELETE FROM equip WHERE id = ?");
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psDelEq", ex);
+            }
+        }
+        
+        try
+        {
+            psDelEq.setInt(1, e.getId());
+            eliminat = psDelEq.executeUpdate();
+
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en eliminar l'equip", ex);
+        }
+        
+        return eliminat;
     }
     
     /**
@@ -321,22 +420,145 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public List<Jugador> obtenirJugadors() throws GestorBDManagerException
     {
-        return null;
+        List<Jugador> jugadors = new ArrayList<>();
+        Statement q = null;
+        try
+        {
+            q = conn.createStatement();
+            ResultSet rs = q.executeQuery("SELECT j.*, m.equip, m.titular FROM jugador j " +
+"                                          INNER join membre m ON m.jugador = j.id " +
+"                                          INNER join equip e ON e.id = m.equip");
+            while (rs.next())
+            {
+                int id = rs.getInt("id");
+                String nom = rs.getString("nom");
+                String cognoms = rs.getString("cognoms");
+                String sexe = rs.getString("sexe");
+                LocalDate data_naix = rs.getDate("data_naix").toLocalDate();
+                String idlegal = rs.getString("idlegal");
+                String iban = rs.getString("iban");
+                LocalDate fi_revi = rs.getDate("any_fi_revi_medica").toLocalDate();
+                String adresa = rs.getString("adresa");
+                String foto = rs.getString("foto");
+                Equip eq = obtenirEquip(rs.getInt("m.equip"));
+                String titular = rs.getString("m.titular");
+                
+                Jugador j = new Jugador();
+                j.setId(id);
+                j.setNom(nom);
+                j.setCognoms(cognoms);
+                j.setSexe(sexe);
+                j.setData_naix(data_naix);
+                j.setIdLegal(idlegal);
+                j.setIban(iban);
+                j.setAny_fi_revi_medica(fi_revi);
+                j.setAdresa(adresa);
+                j.setFoto(foto);
+                j.setEquip(eq);
+                j.setTitular(titular);
+                
+                jugadors.add(j);
+            }
+            rs.close();
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en intentar recuperar la llista de jugadors\n", ex);
+        }
+        finally
+        {
+            if (q != null)
+            {
+                try
+                {
+                    q.close();
+                }
+                catch (SQLException ex)
+                {
+                    throw new GestorBDManagerException("Error en intentar tancar la sentència que ha recuperat la llista de jugadors.\n", ex);
+                }
+            }
+        }
+        
+        return jugadors;
     }
     
     /**
      * Retorna llistat amb els jugadors que concordin amb nom/cognoms, equip o sexe introduits per cercar
      * 
-     * @param nomJugador Nom o Cognoms dels jugadors o jugador que es volen cercar
+     * @param nomJugador Nom i/o Cognoms dels jugadors o jugador que es vol cercar
      * @param e Equip del qual es volen obtenir els o el jugador
-     * @param sexe Sexe del jugador o jugadors que es volen cercar
+     * @param sexe_busqueda Sexe del jugador o jugadors que es volen cercar
      * @return Llistat amb els jugadors (o jugador) que compleixin les condicions introduides
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public List<Jugador> buscarJugadors(String nomJugador, Equip e, String sexe) throws GestorBDManagerException
+    public List<Jugador> buscarJugadors(String nomJugador, Equip e, String sexe_busqueda) throws GestorBDManagerException
     {
-        return null;
+        List<Jugador> jugadors = new ArrayList<>();
+        
+        if (psSelListJugador == null)
+        {
+            try
+            {   // funció convert l'he tret d'aqui: https://stackoverflow.com/questions/35689157/compare-strings-ignoring-accents-in-sql-oracle per poder ignorar accents
+                psSelListJugador = conn.prepareStatement("SELECT j.*, m.equip, m.titular FROM jugador j " +
+                                                        "INNER join membre m ON m.jugador = j.id " +
+                                                        "INNER join equip e ON e.id = m.equip " +
+                                                        "WHERE e.id = ? " +
+                                                        "AND CONVERT(UPPER(j.nom || ' ' || j.cognoms), 'US7ASCII') LIKE UPPER(?) " +
+                                                        "AND j.sexe LIKE ?");
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psSelListJugador", ex);
+            }
+        }
+        
+        try
+        {
+            psSelListJugador.setInt(1, e.getId());
+            psSelListJugador.setString(2, "%"+nomJugador+"%");
+            psSelListJugador.setString(3, sexe_busqueda);
+            ResultSet rs = psSelListJugador.executeQuery();
+            while (rs.next())
+            {
+                int id = rs.getInt("j.id");
+                String nom = rs.getString("j.nom");
+                String cognoms = rs.getString("j.cognoms");
+                String sexe = rs.getString("j.sexe");
+                LocalDate data_naix = rs.getDate("j.data_naix").toLocalDate();
+                String idlegal = rs.getString("j.idlegal");
+                String iban = rs.getString("j.iban");
+                LocalDate fi_revi = rs.getDate("j.any_fi_revi_medica").toLocalDate();
+                String adresa = rs.getString("j.adresa");
+                String foto = rs.getString("j.foto");
+                Equip eq = obtenirEquip(rs.getInt("m.equip"));
+                String titular = rs.getString("m.titular");
+                
+                Jugador j = new Jugador();
+                j.setId(id);
+                j.setNom(nom);
+                j.setCognoms(cognoms);
+                j.setSexe(sexe);
+                j.setData_naix(data_naix);
+                j.setIdLegal(idlegal);
+                j.setIban(iban);
+                j.setAny_fi_revi_medica(fi_revi);
+                j.setAdresa(adresa);
+                j.setFoto(foto);
+                j.setEquip(eq);
+                j.setTitular(titular);
+                
+                jugadors.add(j);
+            }
+            rs.close();
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en seleccionar els equips de nom i/o tipus indicat", ex);
+        }
+        
+        return jugadors;
     }
     
     /**
@@ -348,7 +570,47 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public Jugador obtenirJugador(int idJugador) throws GestorBDManagerException
     {
-        return null;
+        Jugador jugador = new Jugador();
+        
+        if (psSelJug == null)
+        {
+            try
+            {
+                psSelJug = conn.prepareStatement("SELECT j.*, m.equip, m.titular FROM jugador "+
+                                                 "INNER join membre m ON m.jugador = j.id "+
+                                                 "WHERE j.id = ?");
+            }
+            catch(SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psSelJug", ex);
+            }
+        }
+        
+        try
+        {
+            psSelJug.setInt(1, idJugador);
+            ResultSet rs = psSelJug.executeQuery();
+            while (rs.next())
+            {
+                int id = rs.getInt("id");
+                String nom = rs.getString("nom");
+                String tipus = rs.getString("tipus");
+                String nom_cat = rs.getString("nom_cat");
+                LocalDate anny = rs.getDate("temporada").toLocalDate();
+                jugador.setId(id);
+                jugador.setNom(nom);
+                jugador.setTipus(tipus);
+                jugador.setCategoria(obtenirCategoria(nom_cat));
+                jugador.setTemporada(anny);
+            }
+            rs.close();
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en seleccionar l'equip amb id indicat", ex);
+        }
+        
+        return equip;
     }
     
     /**
@@ -358,7 +620,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public void afegirJugador(Jugador j) throws GestorBDManagerException
+    public int afegirJugador(Jugador j) throws GestorBDManagerException
     {
         
     }
@@ -370,7 +632,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public void modificarJugador(Jugador j) throws GestorBDManagerException
+    public int modificarJugador(Jugador j) throws GestorBDManagerException
     {
         
     }
@@ -382,9 +644,34 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public void eliminarJugador(Jugador j) throws GestorBDManagerException
+    public int eliminarJugador(Jugador j) throws GestorBDManagerException
     {
+        int eliminat = 0;
         
+        if (psDelJug == null)
+        {
+            try
+            {
+                psDelJug = conn.prepareStatement("DELETE FROM jugador WHERE id = ?");
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psDelJug", ex);
+            }
+        }
+        
+        try
+        {
+            psDelJug.setInt(1, j.getId());
+            eliminat = psDelEq.executeUpdate();
+
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en eliminar el jugador", ex);
+        }
+        
+        return eliminat;
     }
     
     /**
@@ -477,14 +764,20 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     {
         if (conn != null)
         {
-            try {
+            try
+            {
                 conn.rollback();
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex)
+            {
                 throw new GestorBDManagerException("Error en fer el rollback final.\n", ex);
             }
-            try {
+            try
+            {
                 conn.close();
-            } catch (SQLException ex) {
+            }
+            catch (SQLException ex)
+            {
                 throw new GestorBDManagerException("Error en tancar la connexió.\n", ex);
             }
         }
@@ -498,9 +791,12 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public void confirmarCanvis() throws GestorBDManagerException
     {
-        try {
+        try
+        {
             conn.commit();
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex)
+        {
             throw new GestorBDManagerException("Error en confirmar canvis.\n", ex);
         }
     }
@@ -513,9 +809,12 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public void desferCanvis() throws GestorBDManagerException
     {
-        try {
+        try
+        {
             conn.rollback();
-        } catch (SQLException ex) {
+        }
+        catch (SQLException ex)
+        {
             throw new GestorBDManagerException("Error en desfer canvis.\n", ex);
         }
     }
