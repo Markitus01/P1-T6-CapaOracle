@@ -56,6 +56,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     private PreparedStatement psModJug;
     private PreparedStatement psDelJug;
     private PreparedStatement psSelCat;
+    private PreparedStatement psRetUsu;
     
     /**
      * Intenta connectar amb la BD utilitzant les credencials de l'arxiu XML
@@ -592,16 +593,31 @@ public class GestorBDManagerJdbc implements IGestorBDManager
             ResultSet rs = psSelJug.executeQuery();
             while (rs.next())
             {
-                int id = rs.getInt("id");
-                String nom = rs.getString("nom");
-                String tipus = rs.getString("tipus");
-                String nom_cat = rs.getString("nom_cat");
-                LocalDate anny = rs.getDate("temporada").toLocalDate();
+                int id = rs.getInt("j.id");
+                String nom = rs.getString("j.nom");
+                String cognoms = rs.getString("j.cognoms");
+                String sexe = rs.getString("j.sexe");
+                LocalDate data_naix = rs.getDate("j.data_naix").toLocalDate();
+                String idLegal = rs.getString("j.idLegal");
+                String iban = rs.getString("j.iban");
+                LocalDate any_fi_revi = rs.getDate("j.any_fi_revi_medica").toLocalDate();
+                String adresa = rs.getString("j.adresa");
+                String foto = rs.getString("j.foto");
+                Equip eq = obtenirEquip(rs.getInt("m.equip"));
+                String titular = rs.getString("m.titular");
+                
                 jugador.setId(id);
                 jugador.setNom(nom);
-                jugador.setTipus(tipus);
-                jugador.setCategoria(obtenirCategoria(nom_cat));
-                jugador.setTemporada(anny);
+                jugador.setCognoms(cognoms);
+                jugador.setSexe(sexe);
+                jugador.setData_naix(data_naix);
+                jugador.setIdLegal(idLegal);
+                jugador.setIban(iban);
+                jugador.setAny_fi_revi_medica(any_fi_revi);
+                jugador.setAdresa(adresa);
+                jugador.setFoto(foto);
+                jugador.setEquip(eq);
+                jugador.setTitular(titular);
             }
             rs.close();
         }
@@ -610,7 +626,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
             throw new GestorBDManagerException("Error en seleccionar l'equip amb id indicat", ex);
         }
         
-        return equip;
+        return jugador;
     }
     
     /**
@@ -622,7 +638,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public int afegirJugador(Jugador j) throws GestorBDManagerException
     {
-        
+        return 0;
     }
     
     /**
@@ -634,7 +650,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public int modificarJugador(Jugador j) throws GestorBDManagerException
     {
-        
+        return 0;
     }
     
     /**
@@ -664,7 +680,6 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         {
             psDelJug.setInt(1, j.getId());
             eliminat = psDelEq.executeUpdate();
-
         }
         catch (SQLException ex)
         {
@@ -745,13 +760,32 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public Usuari retornarUsuari(String login, String pswd) throws GestorBDManagerException
+    public int loginUsuari(String login, String pswd) throws GestorBDManagerException
     {
-        if (conn != null)
-        {
-            
+       int trobat = 0;
+        
+        if (psRetUsu == null) {
+            try {
+                psRetUsu = conn.prepareStatement("SELECT login, pswd FROM usuari WHERE login = ? AND pswd = ?");
+            } catch (SQLException ex) {
+                throw new GestorBDManagerException("Error en preparar sentència psSelCat", ex);
+            }
         }
-        return null;
+        
+        try
+        {
+            psRetUsu.setString(1, login);
+            psRetUsu.setString(2, pswd);
+            ResultSet rs = psRetUsu.executeQuery();
+            while (rs.next()) {
+                trobat++;
+            }
+            rs.close();
+        } catch (SQLException ex) {
+            throw new GestorBDManagerException("Error en obtenir categoria amb el nom indicat", ex);
+        }
+        
+        return trobat;
     }
     
     /**
