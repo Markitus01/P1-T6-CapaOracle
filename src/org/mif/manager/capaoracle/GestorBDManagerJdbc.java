@@ -211,7 +211,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         {
             try
             {
-                psSelListEquip = conn.prepareStatement("SELECT id, nom, tipus, nom_cat, temporada FROM equip WHERE nom LIKE ? AND tipus LIKE ?");
+                psSelListEquip = conn.prepareStatement("SELECT id, nom, tipus, nom_cat, temporada FROM equip WHERE nom LIKE ? AND tipus = ?");
             }
             catch (SQLException ex)
             {
@@ -222,7 +222,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         try
         {
             psSelListEquip.setString(1, "%"+nomEquip+"%");
-            psSelListEquip.setString(2, "%"+tipusEquip+"%");
+            psSelListEquip.setString(2, tipusEquip);
             ResultSet rs = psSelListEquip.executeQuery();
             while (rs.next())
             {
@@ -231,6 +231,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
                 String tipus = rs.getString("tipus");
                 String nom_cat = rs.getString("nom_cat");
                 LocalDate anny = rs.getDate("temporada").toLocalDate();
+                
                 Equip e = new Equip();
                 e.setId(id);
                 e.setNom(nom);
@@ -421,16 +422,14 @@ public class GestorBDManagerJdbc implements IGestorBDManager
      * @throws org.mif.manager.interficiepersistencia.GestorBDManagerException 
      */
     @Override
-    public List<Jugador> obtenirJugadors(Temporada t) throws GestorBDManagerException
+    public List<Jugador> obtenirJugadors() throws GestorBDManagerException
     {
         List<Jugador> jugadors = new ArrayList<>();
         Statement q = null;
         try
         {
             q = conn.createStatement();
-            ResultSet rs = q.executeQuery("SELECT j.*, m.equip, m.titular FROM jugador j " +
-"                                          INNER join membre m ON m.jugador = j.id " +
-"                                          INNER join equip e ON e.id = m.equip");
+            ResultSet rs = q.executeQuery("SELECT * FROM jugador");
             while (rs.next())
             {
                 int id = rs.getInt("id");
@@ -443,8 +442,6 @@ public class GestorBDManagerJdbc implements IGestorBDManager
                 LocalDate fi_revi = rs.getDate("any_fi_revi_medica").toLocalDate();
                 String adresa = rs.getString("adresa");
                 String foto = rs.getString("foto");
-                Equip eq = obtenirEquip(rs.getInt("m.equip"));
-                String titular = rs.getString("m.titular");
                 
                 Jugador j = new Jugador();
                 j.setId(id);
@@ -457,9 +454,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
                 j.setAny_fi_revi_medica(fi_revi);
                 j.setAdresa(adresa);
                 j.setFoto(foto);
-                j.setEquip(eq);
-                j.setTitular(titular);
-                
+
                 jugadors.add(j);
             }
             rs.close();

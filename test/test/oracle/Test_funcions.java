@@ -39,7 +39,7 @@ public class Test_funcions {
         System.out.println(dbm.afegirEquip(noueq));
         System.out.println(dbm.afegirEquip(noueq2));
         
-        List<Equip> tots_equips = dbm.obtenirEquips();
+        List<Equip> tots_equips = dbm.obtenirEquips(temps.get(0));
         for (int i = 0; i < tots_equips.size(); i++)
         {
             System.out.println(tots_equips.get(i));
