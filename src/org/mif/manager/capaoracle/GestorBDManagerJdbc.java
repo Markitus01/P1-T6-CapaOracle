@@ -50,6 +50,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     // Statements d'equip
     private PreparedStatement psSelListEquipsTemporada;
     private PreparedStatement psSelListEquip;
+    private PreparedStatement psSelEquipTitular;
     private PreparedStatement psSelEq;
     private PreparedStatement psInsEq;
     private PreparedStatement psModEq;
@@ -59,6 +60,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     private PreparedStatement psSelListJugadorEquipInscriptibles;
     private PreparedStatement psSelListJugador;
     private PreparedStatement psSelJug;
+    private PreparedStatement psSelTitular;
     private PreparedStatement psInsJug;
     private PreparedStatement psModJug;
     private PreparedStatement psDelJug;
@@ -66,6 +68,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     private PreparedStatement psInsMem;
     private PreparedStatement psModMem;
     private PreparedStatement psDelMem;
+    private PreparedStatement psDelMembsEq;
     // Statements de categoria
     private PreparedStatement psSelCat;
     // Statements d'usuari
@@ -301,6 +304,58 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         
         return equips;
     }
+    
+    /**
+     * Retorna l'id de l'equip on el jugador és titular, o null si no n'és a cap.
+     * 
+     * @param jugadorId id del jugador a consultar
+     * @return id de l'equip o null si no n'és titular a cap equip
+     * @throws GestorBDManagerException 
+    */
+    @Override
+    public Integer obtenirEquipOnEsTitular(int jugadorId) throws GestorBDManagerException
+    {
+        Integer equipId = null;
+
+        if (psSelEquipTitular == null)
+        {
+            try
+            {
+                psSelEquipTitular = conn.prepareStatement(
+                    "SELECT equip FROM membre WHERE jugador = ? AND titular = 'Titular'"
+                );
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psSelEquipTitular:\n"+ ex.getMessage());
+            }
+        }
+
+        ResultSet rs = null;
+        try
+        {
+            psSelEquipTitular.setInt(1, jugadorId);
+            rs = psSelEquipTitular.executeQuery();
+            if (rs.next())
+            {
+                equipId = rs.getInt("equip");
+            }
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en seleccionar l'equip on el jugador és titular:\n"+ ex.getMessage());
+        }
+        finally
+        {
+            if (rs != null)
+            {
+                try { rs.close(); } catch (SQLException ex) { /* Ignora */ }
+            }
+        }
+
+        return equipId;
+    }
+
 
     /**
      * Retorna l'equip obtingut a partir de la seva id
@@ -833,6 +888,61 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     }
     
     /**
+     * Comprova si un jugador és titular a un equip.
+     * 
+     * @param equipId id de l'equip
+     * @param jugadorId id del jugador
+     * @return true si és titular, false si és convidat o no hi és
+     * @throws GestorBDManagerException
+    */
+    @Override
+    public boolean esTitular(int equipId, int jugadorId) throws GestorBDManagerException
+    {
+        boolean titular = false;
+
+        if (psSelTitular == null)
+        {
+            try
+            {
+                psSelTitular = conn.prepareStatement("SELECT titular FROM membre WHERE equip = ? AND jugador = ?");
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psSelTitular:\n" + ex.getMessage());
+            }
+        }
+
+        ResultSet rs = null;
+        try
+        {
+            psSelTitular.setInt(1, equipId);
+            psSelTitular.setInt(2, jugadorId);
+            rs = psSelTitular.executeQuery();
+            if (rs.next())
+            {
+                String tit = rs.getString("titular");
+                if (tit != null && tit.equalsIgnoreCase("Titular"))
+                {
+                    titular = true;
+                }
+            }
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error comprovant si el jugador és titular:\n" + ex.getMessage());
+        }
+        finally
+        {
+            if (rs != null)
+            {
+                try { rs.close(); } catch (SQLException ex) { /* Ignora */ }
+            }
+        }
+
+        return titular;
+    }
+    
+    /**
      * Insereix jugador a la BD
      * 
      * @param j Jugador a inserir
@@ -890,6 +1000,43 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         }
         
         return eliminat;
+    }
+    
+    /**
+     * Elimina totes les relacions membre associades a un equip
+     * 
+     * @param equipId id de l'equip del qual es volen eliminar tots els membres
+     * @return int nombre de membres eliminats
+     * @throws GestorBDManagerException
+    */
+    @Override
+    public int eliminarMembresEquip(int equipId) throws GestorBDManagerException
+    {
+        int eliminats = 0;
+
+        if (psDelMembsEq == null)
+        {
+            try
+            {
+                psDelMembsEq = conn.prepareStatement("DELETE FROM membre WHERE equip = ?");
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psDelMembresEquip:\n"+ ex.getMessage());
+            }
+        }
+
+        try
+        {
+            psDelMembsEq.setInt(1, equipId);
+            eliminats = psDelMembsEq.executeUpdate();
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en eliminar els membres de l'equip:\n"+ ex.getMessage());
+        }
+
+        return eliminats;
     }
     
     /**
@@ -1085,17 +1232,17 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         
         try
         {
-            psInsMem.setInt(1, m.getEquMembre());
-            psInsMem.setInt(2, m.getJugMembre());
+            psDelMem.setInt(1, m.getEquMembre());
+            psDelMem.setInt(2, m.getJugMembre());
             if (m.getTitular())
             {
-                psModMem.setString(3, "Titular");
+                psDelMem.setString(3, "Titular");
             }
             else
             {
-                psModMem.setString(3, "Convidat");
+                psDelMem.setString(3, "Convidat");
             }
-            inserit = psInsMem.executeUpdate();
+            inserit = psDelMem.executeUpdate();
 
         }
         catch (SQLException ex)
