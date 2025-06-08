@@ -65,6 +65,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     private PreparedStatement psModJug;
     private PreparedStatement psDelJug;
     // Statements de membre
+    private PreparedStatement psSelListMem;
     private PreparedStatement psInsMem;
     private PreparedStatement psModMem;
     private PreparedStatement psDelMem;
@@ -1040,62 +1041,59 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     }
     
     /**
-     * Obtenim les relacions de membres de la BD
+     * Retorna tots els membres d'una temporada concreta.
      * 
-     * @return Llista de membres
+     * @param t Temporada de la qual volem els membres
+     * @return Llista de membres d'aquella temporada
      * @throws GestorBDManagerException 
-     */
+    */
     @Override
-    public List<Membre> obtenirMembres() throws GestorBDManagerException
+    public List<Membre> obtenirMembres(Temporada t) throws GestorBDManagerException
     {
         List<Membre> membres = new ArrayList<>();
-        Statement q = null;
+
+        if (psSelListMem == null)
+        {
+            try
+            {
+                psSelListMem = conn.prepareStatement(
+                    "SELECT m.equip, m.jugador, m.titular " +
+                    "FROM membre m " +
+                    "INNER JOIN equip e ON m.equip = e.id " +
+                    "WHERE e.temporada = ?"
+                );
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psSelMembresTemporada:\n" + ex.getMessage());
+            }
+        }
+
+        ResultSet rs = null;
         try
         {
-            q = conn.createStatement();
-            ResultSet rs = q.executeQuery("SELECT * FROM membre");
+            psSelListMem.setDate(1, java.sql.Date.valueOf(t.getAnny()));
+            rs = psSelListMem.executeQuery();
+
             while (rs.next())
             {
                 int equip = rs.getInt("equip");
                 int jugador = rs.getInt("jugador");
-                
+                String titularStr = rs.getString("titular");
+
                 Membre m = new Membre();
                 m.setEquMembre(equip);
                 m.setJugMembre(jugador);
-                switch (rs.getString("titular"))
-                {
-                    case "Titular":
-                        m.setTitular(true);
-                        break;
-                        
-                    case "Convidat":
-                        m.setTitular(false);
-                        break;                    
-                }
-                
+                m.setTitular("Titular".equalsIgnoreCase(titularStr));
+
                 membres.add(m);
             }
-            rs.close();
         }
         catch (SQLException ex)
         {
-            throw new GestorBDManagerException("Error en intentar recuperar la llista de membres\n"+ ex.getMessage());
+            throw new GestorBDManagerException("Error en intentar recuperar la llista de membres de la temporada\n" + ex.getMessage());
         }
-        finally
-        {
-            if (q != null)
-            {
-                try
-                {
-                    q.close();
-                }
-                catch (SQLException ex)
-                {
-                    throw new GestorBDManagerException("Error en intentar tancar la sentència que ha recuperat la llista de membres.\n"+ ex.getMessage());
-                }
-            }
-        }
-        
+
         return membres;
     }
     
