@@ -952,7 +952,42 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public int afegirJugador(Jugador j) throws GestorBDManagerException
     {
-        return 0;
+        int inserit = 0;
+
+        if (psInsJug == null)
+        {
+            try
+            {
+                psInsJug = conn.prepareStatement(
+                    "INSERT INTO jugador (nom, cognoms, sexe, data_naix, idlegal, iban, any_fi_revi_medica, adresa) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                );
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psInsJug\n" + ex.getMessage());
+            }
+        }
+
+        try
+        {
+            psInsJug.setString(1, j.getNom());
+            psInsJug.setString(2, j.getCognoms());
+            psInsJug.setString(3, j.getSexe());
+            psInsJug.setDate(4, Date.valueOf(j.getData_naix()));
+            psInsJug.setString(5, j.getIdLegal());
+            psInsJug.setString(6, j.getIban());
+            psInsJug.setDate(7, (j.getAny_fi_revi_medica() != null ? Date.valueOf(j.getAny_fi_revi_medica()) : null));
+            psInsJug.setString(8, j.getAdresa());
+
+            inserit = psInsJug.executeUpdate();
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en inserir el jugador:\n" + ex.getMessage());
+        }
+
+        return inserit;
     }
     
     /**
@@ -964,7 +999,43 @@ public class GestorBDManagerJdbc implements IGestorBDManager
     @Override
     public int modificarJugador(Jugador j) throws GestorBDManagerException
     {
-        return 0;
+        int modificat = 0;
+
+        if (psModJug == null)
+        {
+            try
+            {
+                psModJug = conn.prepareStatement(
+                    "UPDATE jugador SET nom = ?, cognoms = ?, sexe = ?, data_naix = ?, idlegal = ?, iban = ?, any_fi_revi_medica = ?, adresa = ? " +
+                    "WHERE id = ?"
+                );
+            }
+            catch (SQLException ex)
+            {
+                throw new GestorBDManagerException("Error en preparar sentència psModJug\n" + ex.getMessage());
+            }
+        }
+
+        try
+        {
+            psModJug.setString(1, j.getNom());
+            psModJug.setString(2, j.getCognoms());
+            psModJug.setString(3, j.getSexe());
+            psModJug.setDate(4, Date.valueOf(j.getData_naix()));
+            psModJug.setString(5, j.getIdLegal());
+            psModJug.setString(6, j.getIban());
+            psModJug.setDate(7, (j.getAny_fi_revi_medica() != null ? Date.valueOf(j.getAny_fi_revi_medica()) : null));
+            psModJug.setString(8, j.getAdresa());
+            psModJug.setInt(10, j.getId());
+
+            modificat = psModJug.executeUpdate();
+        }
+        catch (SQLException ex)
+        {
+            throw new GestorBDManagerException("Error en modificar el jugador:\n" + ex.getMessage());
+        }
+
+        return modificat;
     }
     
     /**
@@ -993,7 +1064,7 @@ public class GestorBDManagerJdbc implements IGestorBDManager
         try
         {
             psDelJug.setInt(1, j.getId());
-            eliminat = psDelEq.executeUpdate();
+            eliminat = psDelJug.executeUpdate();
         }
         catch (SQLException ex)
         {
